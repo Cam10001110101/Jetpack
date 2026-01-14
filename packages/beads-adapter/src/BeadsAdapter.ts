@@ -1,4 +1,5 @@
 import * as fs from 'fs/promises';
+import { watch, FSWatcher } from 'fs';
 import * as path from 'path';
 import { simpleGit, SimpleGit } from 'simple-git';
 import { Task, TaskStatus, TaskGraph, Logger } from '@jetpack/shared';
@@ -14,6 +15,9 @@ export class BeadsAdapter {
   private logger: Logger;
   private tasksFile: string;
   private tasks: Map<string, Task> = new Map();
+  private fileWatcher?: FSWatcher;
+  private reloadDebounceTimer?: NodeJS.Timeout;
+  private isReloading = false;
 
   constructor(private config: BeadsAdapterConfig) {
     this.logger = new Logger('BeadsAdapter');
@@ -45,6 +49,9 @@ export class BeadsAdapter {
 
     // Load existing tasks
     await this.loadTasks();
+
+    // Start watching for file changes
+    this.startFileWatcher();
   }
 
   private async loadTasks(): Promise<void> {
@@ -256,5 +263,106 @@ export class BeadsAdapter {
       byStatus: byStatus as Record<TaskStatus, number>,
       avgCompletionTime: completedCount > 0 ? totalCompletionTime / completedCount : 0,
     };
+  }
+
+  /**
+   * Start watching the tasks.jsonl file for external changes
+   * This allows the orchestrator to pick up tasks created by the web UI or other processes
+   */
+  private startFileWatcher(): void {
+    try {
+      this.fileWatcher = watch(this.tasksFile, (eventType) => {
+        if (eventType === 'change') {
+          this.debouncedReload();
+        }
+      });
+
+      this.logger.info('Started watching tasks.jsonl for changes');
+    } catch (error) {
+      this.logger.warn('Failed to start file watcher:', error);
+    }
+  }
+
+  /**
+   * Debounced reload to avoid excessive file reads during rapid changes
+   */
+  private debouncedReload(): void {
+    if (this.reloadDebounceTimer) {
+      clearTimeout(this.reloadDebounceTimer);
+    }
+
+    this.reloadDebounceTimer = setTimeout(() => {
+      this.reloadTasksFromDisk();
+    }, 500); // 500ms debounce
+  }
+
+  /**
+   * Reload tasks from disk, merging with in-memory state
+   * This preserves any unsaved changes while picking up external modifications
+   */
+  private async reloadTasksFromDisk(): Promise<void> {
+    if (this.isReloading) {
+      return; // Prevent concurrent reloads
+    }
+
+    this.isReloading = true;
+
+    try {
+      const content = await fs.readFile(this.tasksFile, 'utf-8');
+      const lines = content.split('\n').filter(line => line.trim());
+
+      // Build a map of disk tasks
+      const diskTasks = new Map<string, Task>();
+      for (const line of lines) {
+        const task = JSON.parse(line) as Task;
+        task.createdAt = new Date(task.createdAt);
+        task.updatedAt = new Date(task.updatedAt);
+        if (task.completedAt) {
+          task.completedAt = new Date(task.completedAt);
+        }
+        diskTasks.set(task.id, task);
+      }
+
+      // Merge: add new tasks from disk, but keep in-memory versions if they're newer
+      let addedCount = 0;
+      let updatedCount = 0;
+
+      for (const [id, diskTask] of diskTasks.entries()) {
+        const memoryTask = this.tasks.get(id);
+
+        if (!memoryTask) {
+          // New task from disk
+          this.tasks.set(id, diskTask);
+          addedCount++;
+        } else if (diskTask.updatedAt > memoryTask.updatedAt) {
+          // Disk version is newer (external modification)
+          this.tasks.set(id, diskTask);
+          updatedCount++;
+        }
+        // else: keep in-memory version (it's newer or same)
+      }
+
+      if (addedCount > 0 || updatedCount > 0) {
+        this.logger.info(`Reloaded tasks from disk: ${addedCount} added, ${updatedCount} updated`);
+      }
+    } catch (error) {
+      this.logger.error('Failed to reload tasks from disk:', error);
+    } finally {
+      this.isReloading = false;
+    }
+  }
+
+  /**
+   * Clean up resources (file watcher, timers)
+   */
+  async close(): Promise<void> {
+    if (this.reloadDebounceTimer) {
+      clearTimeout(this.reloadDebounceTimer);
+    }
+
+    if (this.fileWatcher) {
+      this.fileWatcher.close();
+      this.logger.info('Stopped watching tasks.jsonl');
+    }
   }
 }

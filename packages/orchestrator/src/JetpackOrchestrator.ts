@@ -457,6 +457,10 @@ export class JetpackOrchestrator {
 
     await this.stopAgents();
 
+    if (this.beads) {
+      await this.beads.close();
+    }
+
     if (this.cass) {
       this.cass.close();
     }

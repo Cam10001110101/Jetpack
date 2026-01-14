@@ -127,9 +127,12 @@ JetpackOrchestrator (packages/orchestrator)
 ### Data Flow
 
 1. **Task Creation**: `JetpackOrchestrator.createTask()` → BeadsAdapter stores in JSONL → broadcasts via MCPMail
+   - **External Task Creation**: Web UI/MCP server write directly to `tasks.jsonl` → BeadsAdapter file watcher detects changes (500ms debounce) → reloads tasks into memory
 2. **Task Claiming**: AgentController polls `getReadyTasks()` (checks dependencies) → `claimTask()` acquires exclusive access
 3. **Execution**: Agent updates task status → retrieves CASS memories for context → executes work → stores learnings
 4. **Coordination**: MCPMail file leasing prevents concurrent file edits; heartbeats track agent liveness
+
+**File Watching**: BeadsAdapter automatically watches `tasks.jsonl` for external modifications. When tasks are created or updated outside the orchestrator process (e.g., via web UI or MCP server), changes are detected and merged into memory within 500ms. This ensures all components stay in sync without requiring restarts.
 
 ### Key Types (packages/shared)
 
@@ -401,6 +404,8 @@ pnpm --filter @jetpack/orchestrator build
 1. Check agent skills match task `requiredSkills`
 2. Verify task status is `ready` (dependencies satisfied)
 3. Look at MCP Mail logs in `.jetpack/mail/`
+
+**Note:** As of v0.1.0, the BeadsAdapter automatically watches `tasks.jsonl` for external changes. Tasks created via the web UI, CLI, or MCP server are automatically picked up by the orchestrator within 500ms (debounced). No restart required.
 
 ## Testing
 
