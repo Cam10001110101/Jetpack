@@ -422,29 +422,29 @@ pnpm jetpack start --dir /path/to/project-b --agents 5
 
 ```bash
 # Start everything (orchestrator + 3 agents + web UI)
-jetpack start
+pnpm jetpack start
 
 # Start with more agents
-jetpack start -a 5
+pnpm jetpack start -a 5
 
 # Start in a specific project directory
-jetpack start -d /path/to/project
+pnpm jetpack start -d /path/to/project
 
 # Start without opening browser
-jetpack start --no-browser
+pnpm jetpack start --no-browser
 
 # CLI-only mode (no web UI)
-jetpack start --no-ui
+pnpm jetpack start --no-ui
 ```
 
 ### Creating Tasks
 
 ```bash
 # Simple task
-jetpack task --title "Fix login bug"
+pnpm jetpack task --title "Fix login bug"
 
 # Complex task with dependencies
-jetpack task \
+pnpm jetpack task \
   --title "Add dark mode support" \
   --description "Implement theme switching across the app" \
   --priority high \
@@ -456,7 +456,7 @@ jetpack task \
 
 ```bash
 # Get current status
-jetpack status
+pnpm jetpack status
 
 # Output example:
 # === Jetpack Status ===
@@ -480,7 +480,7 @@ jetpack status
 
 ```bash
 # Run a complete demo with 5 agents
-jetpack demo --agents 5
+pnpm jetpack demo --agents 5
 
 # This creates interconnected tasks:
 # 1. Set up project structure
@@ -768,7 +768,7 @@ START → PlannerNode → AssignerNode → MonitorNode ─┬→ END (all done)
 **Execution Flow Example:**
 
 ```bash
-jetpack supervise "Build user authentication" --agents 3
+pnpm jetpack supervise "Build user authentication" --agents 3
 ```
 
 1. **PlannerNode** calls Claude to decompose:
@@ -809,7 +809,7 @@ jetpack supervise "Build user authentication" --agents 3
 **Scenario:** Build a complete feature with multiple components
 
 ```bash
-jetpack supervise "Add user profile page with avatar upload" --agents 5
+pnpm jetpack supervise "Add user profile page with avatar upload" --agents 5
 ```
 
 **What happens:**
@@ -826,7 +826,7 @@ jetpack supervise "Add user profile page with avatar upload" --agents 5
 **Scenario:** Fix a bug that spans multiple files
 
 ```bash
-jetpack supervise "Fix the race condition in checkout flow" --agents 3
+pnpm jetpack supervise "Fix the race condition in checkout flow" --agents 3
 ```
 
 **What happens:**
@@ -843,7 +843,7 @@ jetpack supervise "Fix the race condition in checkout flow" --agents 3
 **Scenario:** Large-scale code refactoring
 
 ```bash
-jetpack supervise "Migrate all class components to hooks" --agents 10
+pnpm jetpack supervise "Migrate all class components to hooks" --agents 10
 ```
 
 **What happens:**
@@ -861,17 +861,17 @@ jetpack supervise "Migrate all class components to hooks" --agents 10
 
 ```bash
 # Start Jetpack (web UI opens automatically)
-jetpack start -a 5
+pnpm jetpack start -a 5
 
 # In another terminal, create tasks manually
-jetpack task -t "Set up database schema" -p critical -s database
-jetpack task -t "Create API routes" -p high -s backend
-jetpack task -t "Build dashboard UI" -p medium -s react,frontend
+pnpm jetpack task -t "Set up database schema" -p critical -s database
+pnpm jetpack task -t "Create API routes" -p high -s backend
+pnpm jetpack task -t "Build dashboard UI" -p medium -s react,frontend
 
 # Or use the web UI at http://localhost:3002 to create/manage tasks
 
 # Check progress via CLI
-jetpack status
+pnpm jetpack status
 ```
 
 ---
