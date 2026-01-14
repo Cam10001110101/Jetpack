@@ -39,7 +39,9 @@ export class AgentController {
   ) {
     this.config = config;
     this.workDir = config.workDir;
-    this.executor = new ClaudeCodeExecutor(config.workDir);
+    this.executor = new ClaudeCodeExecutor(config.workDir, {
+      timeoutMs: 15 * 60 * 1000  // 15 minutes for complex Cloudflare integration tasks
+    });
     this.agent = {
       id: generateAgentId(config.name),
       name: config.name,
