@@ -238,6 +238,11 @@ program
           '# Jetpack',
           '.cass/',
           '.jetpack/mail/',
+          '.jetpack/agents.json',
+          '.jetpack/plans/',
+          '',
+          '# Note: .jetpack/config.json can be tracked for team consistency',
+          '# Add ".jetpack/config.json" to .gitignore if you prefer project-specific settings',
         ];
 
         let gitignoreContent = '';

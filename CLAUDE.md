@@ -4,8 +4,46 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Quick Reference
 
+### Installation & Usage
+
+**Two Usage Modes:**
+
+1. **Global Installation (Recommended for Multi-Project Usage)**
+   ```bash
+   # One-time setup
+   cd /path/to/Jetpack
+   pnpm install && pnpm build
+   pnpm setup  # First time only, configures global bin
+   source ~/.zshrc  # or ~/.bashrc
+   cd apps/cli && pnpm link --global
+
+   # Then use in any project
+   cd ~/my-project
+   jetpack init
+   jetpack start --agents 3
+   ```
+
+2. **Local Development (Within Jetpack Repo)**
+   ```bash
+   # From Jetpack root
+   pnpm install && pnpm build
+   pnpm jetpack <command>
+   ```
+
 ### CLI Commands
 
+**Global Install (if linked):**
+| Command | Description |
+|---------|-------------|
+| `jetpack start` | Start orchestrator + agents + web UI |
+| `jetpack start -a 5` | Start with 5 agents |
+| `jetpack task -t "Title" -p high` | Create a task |
+| `jetpack status` | Show system status |
+| `jetpack demo` | Run guided demo |
+| `jetpack supervise "request"` | AI-powered task breakdown |
+| `jetpack mcp --dir /path` | Start MCP server |
+
+**Local Development (from Jetpack repo):**
 | Command | Description |
 |---------|-------------|
 | `pnpm jetpack start` | Start orchestrator + agents + web UI |
@@ -376,3 +414,136 @@ pnpm --filter @jetpack/beads-adapter test
 # Run with coverage
 pnpm test -- --coverage
 ```
+
+## Global Installation (Beads-like Workflow)
+
+### Overview
+
+Jetpack supports global installation via `pnpm link --global`, enabling a Beads-like workflow where you install Jetpack once and use it across multiple projects.
+
+### Why This Works
+
+The global linking approach creates a **symlink** to the CLI:
+- CLI runs from the Jetpack source location
+- Preserves relative paths (e.g., `__dirname + '../../web'` still resolves to web app)
+- No code changes needed
+- Perfect for development and multi-project usage
+
+### One-Time Setup
+
+```bash
+# 1. Build Jetpack
+cd /path/to/Jetpack
+pnpm install
+pnpm build
+
+# 2. Setup pnpm global bin (first time only)
+pnpm setup
+source ~/.zshrc  # or ~/.bashrc for bash
+
+# 3. Link CLI globally
+cd apps/cli
+pnpm link --global
+
+# 4. Verify
+cd ~
+jetpack --version
+```
+
+### Using in Projects
+
+```bash
+# Navigate to any project
+cd ~/my-project
+
+# Initialize (creates .beads/, .cass/, .jetpack/)
+jetpack init
+
+# Start orchestrator + agents + web UI
+jetpack start --agents 3
+
+# Create tasks
+jetpack task -t "Implement feature" -p high
+
+# Check status
+jetpack status
+```
+
+### What Gets Created
+
+When you run `jetpack init`:
+- `.beads/` - Task storage (git-tracked for team collaboration)
+- `.beads/tasks/` - Drop markdown files here to create tasks
+- `.cass/` - Agent memory (gitignored)
+- `.jetpack/` - Configuration and agent communication
+  - `.jetpack/config.json` - Can be tracked for team defaults
+  - `.jetpack/mail/` - Runtime agent messages (gitignored)
+  - `.jetpack/agents.json` - Runtime state (gitignored)
+  - `.jetpack/plans/` - Local plans (gitignored)
+- `CLAUDE.md` - Updated with Jetpack usage instructions
+
+### .gitignore Patterns
+
+The init command creates/updates `.gitignore` with:
+```gitignore
+# Jetpack
+.cass/
+.jetpack/mail/
+.jetpack/agents.json
+.jetpack/plans/
+
+# Note: .jetpack/config.json can be tracked for team consistency
+# Add ".jetpack/config.json" to .gitignore if you prefer project-specific settings
+```
+
+**Note:** `.beads/` is intentionally tracked in git to preserve task history.
+
+### Updating Jetpack
+
+```bash
+# Pull latest changes
+cd /path/to/Jetpack
+git pull
+
+# Rebuild
+pnpm install
+pnpm build
+
+# Global link stays active - no need to re-link
+```
+
+### Uninstalling
+
+```bash
+pnpm unlink --global @jetpack/cli
+```
+
+### Known Limitations
+
+**npm install -g vs pnpm link --global:**
+| Method | Works? | Reason |
+|--------|--------|--------|
+| `pnpm link --global` | ✅ YES | Symlink preserves monorepo structure |
+| `npm install -g @jetpack/cli` | ❌ NO | Web app not included in published package |
+
+For production npm publishing, the web UI would need to be:
+1. Pre-built and included in the package, OR
+2. Published as a separate package (`@jetpack/web-ui`), OR
+3. Hosted remotely (cloud-based web UI)
+
+The current symlink approach is ideal for **development and personal use** across multiple projects.
+
+### Path Resolution Notes
+
+**Confirmed Working:**
+- All adapter path resolution (Beads, CASS, MCPMail)
+- Orchestrator working directory handling
+- Agent executor spawning with correct `cwd`
+- `jetpack init` creating directories in target project (not Jetpack source)
+- Web UI respecting `JETPACK_WORK_DIR` environment variable
+- MCP server using `JETPACK_WORK_DIR`
+
+**Symlink Preserves:**
+- Relative path from CLI to web app (`../../web` at apps/cli/src/index.ts:96)
+- All monorepo workspace dependencies
+- TypeScript source maps for debugging

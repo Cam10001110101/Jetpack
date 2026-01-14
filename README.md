@@ -137,17 +137,98 @@ Common fixes:
 - **"Can't be used to index type"** - Add missing keys to the mapped type
 - **"Command not found: jetpack"** - Use `pnpm jetpack` instead of `jetpack` when running from source
 
+### Global Installation (Recommended for Development)
+
+Install Jetpack once in a permanent location, then use it in any project—just like Beads!
+
+**One-Time Setup:**
+```bash
+# 1. Clone and build Jetpack in a permanent location
+cd ~/GITHUB  # or wherever you keep repos
+git clone https://github.com/spencerthomas/Jetpack.git
+cd Jetpack
+
+# 2. Install dependencies and build
+pnpm install
+pnpm build
+
+# 3. Setup pnpm global bin directory (first time only)
+pnpm setup
+source ~/.zshrc  # or ~/.bashrc for bash
+
+# 4. Link globally
+cd apps/cli
+pnpm link --global
+
+# 5. Verify installation
+cd ~
+jetpack --version
+```
+
+**Using Jetpack in Any Project:**
+```bash
+# Navigate to your project
+cd ~/my-awesome-app
+
+# Initialize Jetpack (like 'bd init' for Beads)
+jetpack init
+
+# Start the orchestrator + agents + web UI
+jetpack start --agents 3
+
+# Create tasks
+jetpack task -t "Implement feature X" -p high -s typescript,backend
+
+# Check status
+jetpack status
+```
+
+**What Gets Created:**
+
+When you run `jetpack init`, these folders are created in your project:
+- `.beads/` - Task storage (git-backed, commit this!)
+- `.cass/` - Agent memory (gitignored)
+- `.jetpack/` - Configuration and agent communication
+- `CLAUDE.md` - Updated with Jetpack usage instructions
+
+**Updating Jetpack:**
+```bash
+# When Jetpack is updated, just rebuild
+cd ~/GITHUB/Jetpack
+git pull
+pnpm install
+pnpm build
+# Global link stays active, no need to re-link
+```
+
+**Uninstall:**
+```bash
+pnpm unlink --global @jetpack/cli
+```
+
+**How It Works:**
+- `pnpm link --global` creates a symlink to the CLI in your global node_modules
+- The CLI runs from the Jetpack source location (preserving relative paths to web UI)
+- All project data (tasks, memory, messages) stays in your project directories
+- Perfect for development and personal use across multiple projects
+
+**Note on npm Package:**
+
+For production npm installation (`npm install -g @jetpack/cli`), the web UI component would need to be restructured. The current global linking approach is ideal for development and multi-project usage from source.
+
 ### Getting Started
 
 ```bash
-# Initialize Jetpack in your project
-pnpm jetpack init
+# If you linked globally (recommended):
+jetpack init
+jetpack start
 
-# Start everything (orchestrator + 3 agents + web UI)
+# If running from source (without global link):
+pnpm jetpack init
 pnpm jetpack start
 ```
 
-> **Important:** When running from source, always use `pnpm jetpack <command>` instead of just `jetpack`
+> **Tip:** Use the [global installation](#global-installation-recommended-for-development) method for the best experience across multiple projects!
 
 **`jetpack init` creates:**
 - `.beads/` - Task storage (git-tracked)
@@ -184,7 +265,7 @@ The file is automatically converted to a task and moved to `processed/`.
 
 **Option 2: CLI command**
 ```bash
-pnpm jetpack task -t "Fix the login bug" -p high -s typescript
+jetpack task -t "Fix the login bug" -p high -s typescript
 ```
 
 **Option 3: Web UI**
@@ -192,37 +273,39 @@ Use the Kanban board at http://localhost:3002
 
 ### CLI Commands Reference
 
+> **Note:** Examples below use `jetpack` (global install). If running from source without global link, use `pnpm jetpack` instead.
+
 | Command | Description | Example |
 |---------|-------------|---------|
-| `init` | Initialize Jetpack in a project | `pnpm jetpack init -a 5 -p 3005` |
-| `start` | Start orchestrator + agents + web UI | `pnpm jetpack start -a 5` |
-| `task` | Create a new task | `pnpm jetpack task -t "Fix bug" -p high` |
-| `status` | Show system status | `pnpm jetpack status` |
-| `demo` | Run guided demo workflow | `pnpm jetpack demo --agents 5` |
-| `supervise` | AI-powered task breakdown | `pnpm jetpack supervise "Build auth"` |
-| `mcp` | Start MCP server for Claude Code | `pnpm jetpack mcp --dir /path` |
+| `init` | Initialize Jetpack in a project | `jetpack init -a 5 -p 3005` |
+| `start` | Start orchestrator + agents + web UI | `jetpack start -a 5` |
+| `task` | Create a new task | `jetpack task -t "Fix bug" -p high` |
+| `status` | Show system status | `jetpack status` |
+| `demo` | Run guided demo workflow | `jetpack demo --agents 5` |
+| `supervise` | AI-powered task breakdown | `jetpack supervise "Build auth"` |
+| `mcp` | Start MCP server for Claude Code | `jetpack mcp --dir /path` |
 
 ### CLI Options
 
 ```bash
 # Initialize with custom settings
-pnpm jetpack init -a 5 -p 3005      # 5 agents, port 3005
+jetpack init -a 5 -p 3005      # 5 agents, port 3005
 
 # Start (reads from .jetpack/config.json)
-pnpm jetpack start                   # Uses config defaults
-pnpm jetpack start -a 5              # Override: 5 agents
-pnpm jetpack start --no-browser      # Don't auto-open browser
-pnpm jetpack start --no-ui           # CLI-only mode
+jetpack start                   # Uses config defaults
+jetpack start -a 5              # Override: 5 agents
+jetpack start --no-browser      # Don't auto-open browser
+jetpack start --no-ui           # CLI-only mode
 
 # Task management
-pnpm jetpack task -t "Title" -p high -s typescript,backend
-pnpm jetpack status
+jetpack task -t "Title" -p high -s typescript,backend
+jetpack status
 
 # Run guided demo
-pnpm jetpack demo --agents 5
+jetpack demo --agents 5
 
 # AI supervisor for complex requests
-pnpm jetpack supervise "Build user authentication" --agents 5
+jetpack supervise "Build user authentication" --agents 5
 ```
 
 ---
@@ -291,13 +374,13 @@ The supervisor uses LangGraph to provide intelligent orchestration:
 
 ```bash
 # With Claude (default)
-pnpm jetpack supervise "Add a REST API for user management" --llm claude
+jetpack supervise "Add a REST API for user management" --llm claude
 
 # With OpenAI
-pnpm jetpack supervise "Implement dark mode" --llm openai --model gpt-4-turbo
+jetpack supervise "Implement dark mode" --llm openai --model gpt-4-turbo
 
 # With Ollama (local)
-pnpm jetpack supervise "Fix the login bug" --llm ollama --model llama2
+jetpack supervise "Fix the login bug" --llm ollama --model llama2
 ```
 
 The supervisor:
@@ -355,7 +438,7 @@ Jetpack works **on the local machine** in the folder you specify. It creates hid
 When you run Jetpack on a project:
 
 ```bash
-pnpm jetpack start --dir /path/to/your/project --agents 3
+jetpack start --dir /path/to/your/project --agents 3
 ```
 
 Jetpack creates **hidden folders inside your project directory**:
@@ -394,10 +477,10 @@ Jetpack creates **hidden folders inside your project directory**:
 cd /Users/tom/dev/my-app
 
 # Start Jetpack with 3 agents
-pnpm jetpack start --agents 3
+jetpack start --agents 3
 
 # Or specify the directory explicitly from anywhere
-pnpm jetpack start --dir /Users/tom/dev/my-app --agents 3
+jetpack start --dir /Users/tom/dev/my-app --agents 3
 ```
 
 The agents then work directly on your codebase, creating and editing files just like you would.
@@ -408,10 +491,10 @@ Each project maintains its own isolated state:
 
 ```bash
 # Project A - has its own .beads/, .cass/, .jetpack/
-pnpm jetpack start --dir /path/to/project-a --agents 3
+jetpack start --dir /path/to/project-a --agents 3
 
 # Project B - completely separate state
-pnpm jetpack start --dir /path/to/project-b --agents 5
+jetpack start --dir /path/to/project-b --agents 5
 ```
 
 ---
@@ -422,29 +505,29 @@ pnpm jetpack start --dir /path/to/project-b --agents 5
 
 ```bash
 # Start everything (orchestrator + 3 agents + web UI)
-pnpm jetpack start
+jetpack start
 
 # Start with more agents
-pnpm jetpack start -a 5
+jetpack start -a 5
 
 # Start in a specific project directory
-pnpm jetpack start -d /path/to/project
+jetpack start -d /path/to/project
 
 # Start without opening browser
-pnpm jetpack start --no-browser
+jetpack start --no-browser
 
 # CLI-only mode (no web UI)
-pnpm jetpack start --no-ui
+jetpack start --no-ui
 ```
 
 ### Creating Tasks
 
 ```bash
 # Simple task
-pnpm jetpack task --title "Fix login bug"
+jetpack task --title "Fix login bug"
 
 # Complex task with dependencies
-pnpm jetpack task \
+jetpack task \
   --title "Add dark mode support" \
   --description "Implement theme switching across the app" \
   --priority high \
@@ -456,7 +539,7 @@ pnpm jetpack task \
 
 ```bash
 # Get current status
-pnpm jetpack status
+jetpack status
 
 # Output example:
 # === Jetpack Status ===
@@ -480,7 +563,7 @@ pnpm jetpack status
 
 ```bash
 # Run a complete demo with 5 agents
-pnpm jetpack demo --agents 5
+jetpack demo --agents 5
 
 # This creates interconnected tasks:
 # 1. Set up project structure
@@ -809,7 +892,7 @@ pnpm jetpack supervise "Build user authentication" --agents 3
 **Scenario:** Build a complete feature with multiple components
 
 ```bash
-pnpm jetpack supervise "Add user profile page with avatar upload" --agents 5
+jetpack supervise "Add user profile page with avatar upload" --agents 5
 ```
 
 **What happens:**
@@ -826,7 +909,7 @@ pnpm jetpack supervise "Add user profile page with avatar upload" --agents 5
 **Scenario:** Fix a bug that spans multiple files
 
 ```bash
-pnpm jetpack supervise "Fix the race condition in checkout flow" --agents 3
+jetpack supervise "Fix the race condition in checkout flow" --agents 3
 ```
 
 **What happens:**
@@ -843,7 +926,7 @@ pnpm jetpack supervise "Fix the race condition in checkout flow" --agents 3
 **Scenario:** Large-scale code refactoring
 
 ```bash
-pnpm jetpack supervise "Migrate all class components to hooks" --agents 10
+jetpack supervise "Migrate all class components to hooks" --agents 10
 ```
 
 **What happens:**
@@ -861,17 +944,17 @@ pnpm jetpack supervise "Migrate all class components to hooks" --agents 10
 
 ```bash
 # Start Jetpack (web UI opens automatically)
-pnpm jetpack start -a 5
+jetpack start -a 5
 
 # In another terminal, create tasks manually
-pnpm jetpack task -t "Set up database schema" -p critical -s database
-pnpm jetpack task -t "Create API routes" -p high -s backend
-pnpm jetpack task -t "Build dashboard UI" -p medium -s react,frontend
+jetpack task -t "Set up database schema" -p critical -s database
+jetpack task -t "Create API routes" -p high -s backend
+jetpack task -t "Build dashboard UI" -p medium -s react,frontend
 
 # Or use the web UI at http://localhost:3002 to create/manage tasks
 
 # Check progress via CLI
-pnpm jetpack status
+jetpack status
 ```
 
 ---

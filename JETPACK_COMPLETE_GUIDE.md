@@ -143,17 +143,47 @@ Click "New Task" in the Kanban board.
 
 # 3. Installation
 
-## Option 1: Install from npm (Recommended)
+## Option 1: Global Installation via Link (Recommended)
+
+Install Jetpack once, use it everywhere—just like Beads!
 
 ```bash
-# Install globally
-npm install -g @jetpack/cli
+# 1. Clone and build in a permanent location
+cd ~/GITHUB  # or wherever you keep repos
+git clone https://github.com/spencerthomas/Jetpack.git
+cd Jetpack
 
-# Use from anywhere
-jetpack start --agents 3
+# 2. Install dependencies and build
+pnpm install
+pnpm build
+
+# 3. Setup pnpm global bin (first time only)
+pnpm setup
+source ~/.zshrc  # or ~/.bashrc for bash
+
+# 4. Link CLI globally
+cd apps/cli
+pnpm link --global
+
+# 5. Verify installation
+cd ~
+jetpack --version
 ```
 
-## Option 2: Build from Source
+**Then use in any project:**
+```bash
+cd ~/my-project
+jetpack init              # Creates .beads/, .cass/, .jetpack/
+jetpack start --agents 3  # Launch everything
+```
+
+**Why this works:**
+- `pnpm link --global` creates a symlink to the CLI
+- Preserves relative paths to the web UI
+- Easy to update: just `cd ~/GITHUB/Jetpack && pnpm build`
+- Perfect for development across multiple projects
+
+## Option 2: Build from Source (Without Global Link)
 
 ```bash
 # Clone the repository
@@ -166,9 +196,15 @@ pnpm install
 # Build all packages
 pnpm build
 
-# Run via pnpm
+# Run via pnpm (must be in Jetpack directory)
 pnpm jetpack start --agents 3
 ```
+
+## Option 3: npm Package (Not Yet Available)
+
+> **Note:** npm package distribution (`npm install -g @jetpack/cli`) is planned but not yet available. The global linking approach (Option 1) provides the same experience.
+
+For production npm publishing, the web UI component would need to be restructured. The current global linking approach is ideal for development and multi-project usage.
 
 ## Environment Variables
 
