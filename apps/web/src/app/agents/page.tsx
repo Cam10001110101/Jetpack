@@ -133,8 +133,8 @@ export default function AgentsPage() {
   const [spawning, setSpawning] = useState(false);
   const [spawnError, setSpawnError] = useState<string | null>(null);
 
-  // Simulated phase for demo
-  const [simulatedPhase, setSimulatedPhase] = useState<AgentPhase>('idle');
+  // Fallback phase when no agent is selected
+  const simulatedPhase: AgentPhase = 'idle';
 
   // Heartbeat counter
   useEffect(() => {
@@ -497,8 +497,8 @@ export default function AgentsPage() {
                   </div>
                 ) : (
                   pendingTasks.map((task) => {
-                    const isCurrent = selectedAgent?.currentTask === task.id || (!selectedAgent && simulatedPhase === 'executing');
-                    const isClaiming = (selectedAgent?.currentTask === task.id && displayPhase === 'claiming') || (!selectedAgent && simulatedPhase === 'claiming');
+                    const isCurrent = selectedAgent?.currentTask === task.id;
+                    const isClaiming = selectedAgent?.currentTask === task.id && displayPhase === 'claiming';
                     const agentSkills = selectedAgent?.skills || AVAILABLE_SKILLS.slice(0, 6);
                     const isClaimable = task.requiredSkills.length === 0 || task.requiredSkills.some(s => agentSkills.includes(s));
 

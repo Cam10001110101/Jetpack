@@ -94,17 +94,7 @@ Jetpack has a layered architecture with three core storage adapters and an optio
 
 ### Installation
 
-**Option 1: Install from npm (recommended)**
-
-```bash
-# Install globally
-npm install -g @jetpack/cli
-
-# Now use from anywhere
-jetpack start --agents 3
-```
-
-**Option 2: Build from source**
+**Build from source (current method)**
 
 ```bash
 # Clone the repository
@@ -114,22 +104,50 @@ cd Jetpack
 # Install dependencies
 pnpm install
 
-# Build all packages
+# Build all packages (first build may take ~15s)
 pnpm build
+
+# Verify build succeeded
+pnpm jetpack --help
 
 # Run via pnpm
 pnpm jetpack start --agents 3
 ```
 
+> **Note:** NPM package distribution is planned but not yet available. For now, build from source.
+
+**Troubleshooting Build Issues**
+
+If you encounter TypeScript errors during `pnpm build`:
+
+```bash
+# Clean rebuild
+pnpm clean
+pnpm install
+pnpm build
+
+# If issues persist, check for:
+# - Unused variables (TypeScript strict mode)
+# - Missing type definitions
+# - Incomplete union types in switch/map statements
+```
+
+Common fixes:
+- **"Variable declared but never used"** - Remove the unused variable or convert to constant
+- **"Can't be used to index type"** - Add missing keys to the mapped type
+- **"Command not found: jetpack"** - Use `pnpm jetpack` instead of `jetpack` when running from source
+
 ### Getting Started
 
 ```bash
 # Initialize Jetpack in your project
-jetpack init
+pnpm jetpack init
 
-# Start everything
-jetpack start
+# Start everything (orchestrator + 3 agents + web UI)
+pnpm jetpack start
 ```
+
+> **Important:** When running from source, always use `pnpm jetpack <command>` instead of just `jetpack`
 
 **`jetpack init` creates:**
 - `.beads/` - Task storage (git-tracked)
@@ -166,7 +184,7 @@ The file is automatically converted to a task and moved to `processed/`.
 
 **Option 2: CLI command**
 ```bash
-jetpack task -t "Fix the login bug" -p high -s typescript
+pnpm jetpack task -t "Fix the login bug" -p high -s typescript
 ```
 
 **Option 3: Web UI**
@@ -176,35 +194,35 @@ Use the Kanban board at http://localhost:3002
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `init` | Initialize Jetpack in a project | `jetpack init -a 5 -p 3005` |
-| `start` | Start orchestrator + agents + web UI | `jetpack start -a 5` |
-| `task` | Create a new task | `jetpack task -t "Fix bug" -p high` |
-| `status` | Show system status | `jetpack status` |
-| `demo` | Run guided demo workflow | `jetpack demo --agents 5` |
-| `supervise` | AI-powered task breakdown | `jetpack supervise "Build auth"` |
-| `mcp` | Start MCP server for Claude Code | `jetpack mcp --dir /path` |
+| `init` | Initialize Jetpack in a project | `pnpm jetpack init -a 5 -p 3005` |
+| `start` | Start orchestrator + agents + web UI | `pnpm jetpack start -a 5` |
+| `task` | Create a new task | `pnpm jetpack task -t "Fix bug" -p high` |
+| `status` | Show system status | `pnpm jetpack status` |
+| `demo` | Run guided demo workflow | `pnpm jetpack demo --agents 5` |
+| `supervise` | AI-powered task breakdown | `pnpm jetpack supervise "Build auth"` |
+| `mcp` | Start MCP server for Claude Code | `pnpm jetpack mcp --dir /path` |
 
 ### CLI Options
 
 ```bash
 # Initialize with custom settings
-jetpack init -a 5 -p 3005      # 5 agents, port 3005
+pnpm jetpack init -a 5 -p 3005      # 5 agents, port 3005
 
 # Start (reads from .jetpack/config.json)
-jetpack start                   # Uses config defaults
-jetpack start -a 5              # Override: 5 agents
-jetpack start --no-browser      # Don't auto-open browser
-jetpack start --no-ui           # CLI-only mode
+pnpm jetpack start                   # Uses config defaults
+pnpm jetpack start -a 5              # Override: 5 agents
+pnpm jetpack start --no-browser      # Don't auto-open browser
+pnpm jetpack start --no-ui           # CLI-only mode
 
 # Task management
-jetpack task -t "Title" -p high -s typescript,backend
-jetpack status
+pnpm jetpack task -t "Title" -p high -s typescript,backend
+pnpm jetpack status
 
 # Run guided demo
-jetpack demo --agents 5
+pnpm jetpack demo --agents 5
 
 # AI supervisor for complex requests
-jetpack supervise "Build user authentication" --agents 5
+pnpm jetpack supervise "Build user authentication" --agents 5
 ```
 
 ---
@@ -273,13 +291,13 @@ The supervisor uses LangGraph to provide intelligent orchestration:
 
 ```bash
 # With Claude (default)
-jetpack supervise "Add a REST API for user management" --llm claude
+pnpm jetpack supervise "Add a REST API for user management" --llm claude
 
 # With OpenAI
-jetpack supervise "Implement dark mode" --llm openai --model gpt-4-turbo
+pnpm jetpack supervise "Implement dark mode" --llm openai --model gpt-4-turbo
 
 # With Ollama (local)
-jetpack supervise "Fix the login bug" --llm ollama --model llama2
+pnpm jetpack supervise "Fix the login bug" --llm ollama --model llama2
 ```
 
 The supervisor:

@@ -30,6 +30,7 @@ const statusVariants = {
   executing: 'warning',
   completed: 'success',
   failed: 'error',
+  paused: 'default',
 } as const;
 
 export default function ProjectsPage() {
