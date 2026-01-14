@@ -50,3 +50,6 @@ coverage/
 # Temp
 tmp/
 temp/
+
+# Documentation Archive
+DOCS_ARCHIVE/
