@@ -530,6 +530,14 @@ program
   .option('-e, --estimate <minutes>', 'Estimated time in minutes')
   .option('--dir <path>', 'Working directory', process.cwd())
   .action(async (options) => {
+    // Validate priority before starting spinner
+    const validPriorities: TaskPriority[] = ['low', 'medium', 'high', 'critical'];
+    if (!validPriorities.includes(options.priority as TaskPriority)) {
+      console.error(chalk.red(`Error: Invalid priority "${options.priority}"`));
+      console.error(chalk.gray('Valid priorities: low, medium, high, critical'));
+      process.exit(1);
+    }
+
     const spinner = ora('Creating task...').start();
 
     try {
